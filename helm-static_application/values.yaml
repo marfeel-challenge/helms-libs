@@ -76,18 +76,13 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-service_type: "ClusterIP"
 service:
-#  type: "ClusterIP"
-#  port: 8080
-#  targetPort: 8080
-#  protocol: "TCP"
-#  name: "http"
+  type: "LoadBalancer"
+  port: 8080
+  targetPort: 8080
+  protocol: "TCP"
+  name: "http"
 
-  - port: 8081
-    targetPort: 8081
-    protocol: "TCP"
-    name: "http"
 #  - port: 8081
 #    targetPort: 8081
 #    protocol: "TCP"

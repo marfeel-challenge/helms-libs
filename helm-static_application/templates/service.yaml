@@ -21,5 +21,6 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: {{ .Values.service.protocol }}
       name: {{ .Values.service.name }}
+      nodePort: {{ .Values.service.nodePort }}
   selector:
     {{- include "helm-static_application.selectorLabels" . | nindent 4 }}

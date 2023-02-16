@@ -27,6 +27,13 @@ image:
 commonlabels:
   commonlabels: "commonlabels"
 
+command: [
+  "java",
+  "-jar",
+  "/app.jar",
+  "--spring.profiles.active=dev"
+]
+
 deploymentlabels:
   deploylabel: "deploylabel"
 

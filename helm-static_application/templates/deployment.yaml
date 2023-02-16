@@ -53,6 +53,15 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ include "helm-static_application.fullname" . }}
+          #command: ["nginx"]
+          #args: ["HOSTNAME", "KUBERNETES_PORT"]
+          #configure command get values.yaml
+          {{- if .Values.command }}
+          command:
+            {{- range $command := .Values.command }}
+            - {{ $command }}
+            {{- end }}
+          {{- end }}
           env:
           {{- range $key, $val := .Values.configmapToEnv }}
           - name: {{ $key }}

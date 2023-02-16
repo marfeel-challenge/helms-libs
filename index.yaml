@@ -3,12 +3,12 @@ entries:
   helm-static_application:
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2023-02-16T17:44:08.059139132-03:00"
+    created: "2023-02-16T18:07:00.863033316-03:00"
     description: A Helm chart for Kubernetes
-    digest: 2617b335b87e9a1db370555f456798975af64d68d97a139a33a0dc72336327ac
+    digest: 43458e28caeea36b84e752d0949498586c7c8362b8490c399ff4999935de486b
     name: helm-static_application
     type: application
     urls:
     - https://marfeel-challenge.github.io/helms-libs/helm-static_application-0.1.0.tgz
     version: 0.1.0
-generated: "2023-02-16T17:44:08.058634463-03:00"
+generated: "2023-02-16T18:07:00.862490651-03:00"

@@ -1,0 +1,24 @@
+# Default values for lib-helm-java-11.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+configmapToEnv:
+  commonconfigmap1: "contenido-commonconfigmap1"
+  commonconfigmap2: "contenido-commonconfigmap2"
+
+
+configmapToFileEnabled: true
+configmapToFile:
+- name: config
+  path: /tmp/tmp
+  nameFile: config.yaml
+  data: |
+    pepe=pepe
+    ema=ema
+- name: config2
+  path: /tmp/tmp
+  nameFile: config2.yaml
+  data: |
+    #
+    # Application Profile to be applied in Local Development Environment
+    #
+    # From email.properties

@@ -1,0 +1,37 @@
+{{- if .Values.route.enabled -}}
+  {{- range .Values.route.hosts }}
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  {{- if .host }}
+  name: {{ include "helm-static_application.fullname" $ }}-{{ .host }}
+  {{- else }}
+  name: {{ include "helm-static_application.fullname" $ }}
+  {{- end }}
+  labels:
+    {{- include "helm-static_application.labels" $ | nindent 4 }}
+    {{- range $key, $val := $.Values.commonlabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end}}
+    {{- range $key, $val := $.Values.routelabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end}}
+spec:
+  {{- if .host }} 
+  host: {{ .host }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ include "helm-static_application.fullname" $ }}
+    weight: {{ .weight }}
+  port:
+    targetPort: {{ .targetPort }}
+  tls:
+    termination: {{ .tls.termination }}
+    {{- if .tls.insecureEdgeTerminationPolicy }}
+    insecureEdgeTerminationPolicy: {{ .tls.insecureEdgeTerminationPolicy }}
+    {{- end }}
+  wildcardPolicy: {{ .wildcardPolicy }}
+  {{- end }}
+{{- end }}

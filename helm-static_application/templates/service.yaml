@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "helm-static_application.fullname" . }}
+  annotations:
+    metrics.dynatrace.com/port: {{ .Values.servicemonitor.endpoints.port }}
+    metrics.dynatrace.com/scrape: 'false'
+    metrics.dynatrace.com/path: {{ .Values.servicemonitor.endpoints.path }}   
+  labels:
+    {{- include "helm-static_application.labels" . | nindent 4 }}
+    {{- range $key, $val := .Values.commonlabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end}}
+    {{- range $key, $val := .Values.servicelabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end}}
+spec:
+{{- if .Values.service_type }}
+  type: {{ .Values.service_type }}
+  ipFamilies:
+  - IPv4
+  ports:
+    {{- range $service := .Values.service }}
+    - port: {{ $service.port }}
+      targetPort: {{ $service.targetPort }}
+      protocol: {{ $service.protocol }}
+      name: {{ $service.name }}
+    {{- end }}
+{{- else }}
+  type: {{ .Values.service.type }}
+  ipFamilies:
+  - IPv4
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: {{ .Values.service.protocol }}
+      name: {{ .Values.service.name }}
+{{- end }}
+    - name: 8778-tcp
+      port: 8778
+      protocol: TCP
+      targetPort: 8778
+  selector:
+    {{- include "helm-static_application.selectorLabels" . | nindent 4 }}

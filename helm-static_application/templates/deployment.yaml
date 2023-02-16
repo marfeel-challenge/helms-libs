@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helm-static_application.fullname" . }}
+  labels:
+    {{- include "helm-static_application.labels" . | nindent 4 }}
+    {{- range $key, $val := .Values.commonlabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end}}
+    {{- range $key, $val := .Values.deploymentlabels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end}}
+spec:
+  {{ if .Values.deployment -}}
+  revisionHistoryLimit: {{ if .Values.deployment.revisionHistoryLimit -}} {{ .Values.deployment.revisionHistoryLimit }} {{- else -}} 2 {{- end }}
+  progressDeadlineSeconds: {{ if .Values.deployment.progressDeadlineSeconds -}} {{ .Values.deployment.progressDeadlineSeconds }} {{- else -}} 600 {{- end }}
+  {{ if .Values.deployment.strategy -}}
+  strategy:
+
+    {{ if .Values.deployment.strategy.rollingUpdate -}}
+    rollingUpdate:
+      maxSurge: {{ if .Values.deployment.strategy.rollingUpdate.maxSurge -}} {{ .Values.deployment.strategy.rollingUpdate.maxSurge }} {{- else -}} 25% {{- end }} 
+      maxUnavailable: {{ if .Values.deployment.strategy.rollingUpdate.maxUnavailable -}} {{ .Values.deployment.strategy.rollingUpdate.maxUnavailable }} {{- else -}} 25% {{- end }}
+    type: {{ if .Values.deployment.strategy.type -}} {{ .Values.deployment.strategy.type }} {{- else -}} "RollingUpdate" {{- end }}
+    {{- end }}
+
+  {{- end }}
+  {{- else -}}
+  revisionHistoryLimit: 2
+  progressDeadlineSeconds: 600
+  {{- end }}
+
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+
+  selector:
+    matchLabels:
+      {{- include "helm-static_application.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "helm-static_application.selectorLabels" . | nindent 8 }}
+        {{- range $key, $val := .Values.commonlabels }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end}}
+    spec:
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      serviceAccountName: {{ include "helm-static_application.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          env:
+          {{- range $key, $val := .Values.configmapToEnv }}
+          - name: {{ $key }}
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "helm-static_application.fullname" $ }}
+                key: {{ $key }}
+          {{- end }}
+
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ ( lower .Values.image.repository ) }}:{{ ( lower .Values.image.tag ) | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.image.port.name }}
+              containerPort: {{ .Values.image.port.containerPort }}
+              protocol: {{ .Values.image.port.protocol }}
+          livenessProbe:
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path }}
+              port: {{ .Values.livenessProbe.httpGet.port }}
+          readinessProbe:
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            httpGet:
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+  
+          {{ if or (.Values.configmapToFileEnabled) -}}
+          volumeMounts:
+            {{- if .Values.configmapToFileEnabled }}{{- range $configmapToFile := .Values.configmapToFile }}
+            - name: {{ $configmapToFile.name }}
+              mountPath: {{ $configmapToFile.path }}/{{ $configmapToFile.nameFile }}
+              subPath: {{ $configmapToFile.nameFile }}
+              readOnly: true
+            {{- end }}{{- end }}
+          {{ end }}
+
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{ if or (.Values.configmapToFileEnabled)  }}
+      volumes:
+      {{- if .Values.configmapToFileEnabled }}
+        {{- range $configmapToFile := .Values.configmapToFile }}
+        - name: {{ $configmapToFile.name }}
+          configMap:
+            name: {{ include "helm-static_application.fullname" $ }}
+            items:
+            - key: {{ $configmapToFile.nameFile }}
+              path: {{ $configmapToFile.nameFile }}
+        {{- end }}
+      {{- end }}
+
+    {{ end }}
